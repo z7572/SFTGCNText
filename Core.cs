@@ -28,7 +28,7 @@ namespace CNText
                 font.fallbackFontAssets[0] = font2;
             }
             Logger.LogInfo("本mod为地图编辑器的汉化和汉化包字体的补全(part2)，以及代码中文本的汉化");
-            Logger.LogInfo("made by z7572");
+            Logger.LogInfo("GitHub: https://github.com/z7572/SFTGCNText/releases/");
             try
             {
                 Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
