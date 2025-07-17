@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CNText": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Windows\\System32\\cmd.exe",
+      "commandLineArgs": "/c \"start steam://rungameid/674940\"",
+      "nativeDebugging": false
+    }
+  }
+}
