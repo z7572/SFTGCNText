@@ -1,4 +1,13 @@
-# 汉化包文件说明
+# SFTGCNText
+<p align="center">
+  <a href="https://github.com/z7572/SFTGCNText/releases/latest">
+    <img src="https://img.shields.io/github/downloads/z7572/SFTGCNText/total?label=Github%20downloads&logo=github">
+  </a>
+</p>
+
+## 汉化包文件说明
+
+解压至StickFightTheGame文件夹，全部替换
 
 ## \StickFight_Data
 
