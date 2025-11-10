@@ -1,37 +1,52 @@
 ﻿using BepInEx;
-using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using BepInEx.Configuration;
 using HarmonyLib;
 using LevelEditor;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Reflection.Emit;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace CNText
 {
-    [BepInPlugin("z7572.cntext", "CNText", "1.0")]
+    [BepInPlugin("z7572.cntext", "CNText", "1.1")]
     public class MapEditorCNText : BaseUnityPlugin
     {
+        public static Font ttf;
+        private static ConfigEntry<bool> needReplaceTextComp;
+        private static ConfigEntry<int> customTextFontSize;
+        private static ConfigEntry<bool> removeUnsupportedTags;
+        private static ConfigEntry<bool> closeUnclosedTags;
+
         public void Awake()
         {
-            var font = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf");
-            var font2 = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf ii");
-            if (font2 == null)
+            needReplaceTextComp = Config.Bind("OnlinePlayerUI", "NeedReplaceTextComp", true, "是否显示替换的头顶玩家名称文本组件");
+            customTextFontSize = Config.Bind("OnlinePlayerUI", "CustomTextFontSize", 40, "替换后头顶玩家名称字号");
+            removeUnsupportedTags = Config.Bind("OnlinePlayerUI", "RemoveUnsupportedTags", true, "是否移除不支持的标签");
+            closeUnclosedTags = Config.Bind("OnlinePlayerUI", "CloseUnclosedTags", true, "是否自动闭合未闭合的标签");
+
+            var ab_ttf = GetAssetBundle(Assembly.GetExecutingAssembly(), "anton+msyhbd");
+            ttf = ab_ttf?.LoadAsset<Font>("Anton + msyhbd");
+
+            var sdf = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf");
+            var sdf2 = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf ii");
+            if (sdf2 == null)
             {
                 Logger.LogError("汉化包未安装！");
                 return;
             }
-            if (font.fallbackFontAssets[0] == null || font.fallbackFontAssets[0] != font2)
+            if (sdf.fallbackFontAssets[0] == null || sdf.fallbackFontAssets[0] != sdf2)
             {
-                font.fallbackFontAssets[0] = font2;
+                sdf.fallbackFontAssets[0] = sdf2;
             }
-            Logger.LogInfo("本mod为地图编辑器的汉化和汉化包字体的补全(part2)，以及代码中文本的汉化");
-            Logger.LogInfo("GitHub: https://github.com/z7572/SFTGCNText/releases/");
             try
             {
                 Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
+                Logger.LogInfo("汉化包加载成功！");
             }
             catch (Exception e)
             {
@@ -42,6 +57,37 @@ namespace CNText
         [HarmonyPatch]
         public class Patches
         {
+            [HarmonyPostfix]
+            [HarmonyPatch(typeof(OnlinePlayerUI), "Update")]
+            private static void OnlinePlayerUIUpdatePostfix(OnlinePlayerUI __instance)
+            {
+                var texts = Traverse.Create(__instance).Field("mPlayerTexts").GetValue<TextMeshProUGUI[]>();
+                foreach (var textMeshProUGUI in texts)
+                {
+                    textMeshProUGUI.enabled = true;
+                    var hasUnsupportedChars = textMeshProUGUI.GetParsedText().Contains("□") && !textMeshProUGUI.text.Contains("□");
+
+                    if (hasUnsupportedChars)
+                    {
+                        var text = TMP2FontText(textMeshProUGUI, ttf, "CustomText");
+                        text.fontSize = customTextFontSize.Value;
+                    }
+                    else
+                    {
+                        var customTextTransform = textMeshProUGUI.transform.Find("CustomText");
+                        if (customTextTransform != null)
+                        {
+                            var text = customTextTransform.GetComponent<Text>();
+                            if (text != null)
+                            {
+                                text.enabled = false;
+                            }
+                        }
+                        textMeshProUGUI.color = new Color(textMeshProUGUI.color.r, textMeshProUGUI.color.g, textMeshProUGUI.color.b, 1f);
+                    }
+                }
+            }
+
             [HarmonyPostfix]
             [HarmonyPatch(typeof(LevelCreator), "Start")]
             private static void LevelCreatorStartPostfix()
@@ -105,7 +151,7 @@ namespace CNText
             }
 
             [HarmonyTranspiler]
-            [HarmonyPatch(typeof(EditorLoadSaveUI), "OnSavedClicked", new Type[] { typeof(bool) })]
+            [HarmonyPatch(typeof(EditorLoadSaveUI), "OnSavedClicked", [typeof(bool)])]
             private static IEnumerable<CodeInstruction> OnSavedClickedTranspiler(IEnumerable<CodeInstruction> instructions)
             {
                 var codes = new List<CodeInstruction>(instructions);
@@ -180,7 +226,7 @@ namespace CNText
             }
 
             [HarmonyTranspiler]
-            [HarmonyPatch(typeof(DialougePanelUI), "GiveChoice", new Type[] { typeof(string), typeof(Action), typeof(Action) })]
+            [HarmonyPatch(typeof(DialougePanelUI), "GiveChoice", [typeof(string), typeof(Action), typeof(Action)])]
             private static IEnumerable<CodeInstruction> GiveChoiceTranspiler(IEnumerable<CodeInstruction> instructions)
             {
                 var codes = new List<CodeInstruction>(instructions);
@@ -263,9 +309,29 @@ namespace CNText
             }
         }
 
-        // Wrong position
-        [Obsolete]
-        private static Text TMP2Text(TextMeshProUGUI textMeshProUGUI, Font font = null, string nameOfText = "Text")
+        // https://github.com/Infinite-75/PVZRHCustomization/blob/master/BepInEx/CustomizeLib.BepInEx/CustomCore.cs#L67
+        public static AssetBundle GetAssetBundle(Assembly assembly, string name)
+        {
+            var logger = BepInEx.Logging.Logger.CreateLogSource("CNText");
+            try
+            {
+                using Stream stream = assembly.GetManifestResourceStream(assembly.FullName!.Split(',')[0] + "." + name) ?? assembly.GetManifestResourceStream(name)!;
+                using MemoryStream stream1 = new();
+                stream.CopyTo(stream1);
+                var ab = AssetBundle.LoadFromMemory(stream1.ToArray());
+                logger.LogInfo($"加载 AssetBundle {name} 成功.");
+
+                return ab;
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e.Source);
+                logger.LogError($"加载 AssetBundle {name} 失败：\n{e}");
+                return null;
+            }
+        }
+
+        private static Text TMP2FontText(TextMeshProUGUI textMeshProUGUI, Font font = null, string nameOfText = "Text")
         {
             var transform = textMeshProUGUI.transform;
             var transform2 = transform.Find(nameOfText);
@@ -292,13 +358,26 @@ namespace CNText
                 text.alignByGeometry = true;
             }
 
-            text.color = textMeshProUGUI.color;
-            text.text = textMeshProUGUI.text;
-            textMeshProUGUI.enabled = false;
+            text.color = new Color(textMeshProUGUI.color.r, textMeshProUGUI.color.g, textMeshProUGUI.color.b, 1f);
+            text.text = TMPToFontTextConverter.Convert(textMeshProUGUI.text, removeUnsupportedTags.Value, closeUnclosedTags.Value);
+            textMeshProUGUI.color = new Color(textMeshProUGUI.color.r, textMeshProUGUI.color.g, textMeshProUGUI.color.b, 0f);
             text.enabled = true;
             text.supportRichText = textMeshProUGUI.richText;
 
             return text;
+        }
+    }
+
+    static class Extensions
+    {
+        public static void CopyTo(this Stream source, Stream destination, int bufferSize = 81920)
+        {
+            byte[] array = new byte[bufferSize];
+            int count;
+            while ((count = source.Read(array, 0, array.Length)) != 0)
+            {
+                destination.Write(array, 0, count);
+            }
         }
     }
 }

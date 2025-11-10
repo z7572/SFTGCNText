@@ -1,16 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net35</TargetFramework>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>latest</LangVersion>
     <AssemblyName>CNText</AssemblyName>
     <RootNamespace>CNText</RootNamespace>
     <Authors>z7572</Authors>
-    <Version>1.0</Version>
+    <Version>1.1</Version>
     <Product>CNText</Product>
     <Description>A BepInEx mod for Stick Fight: The Game</Description>
     <AssemblyVersion>1.0</AssemblyVersion>
     <FileVersion>1.0</FileVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="anton+msyhbd" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="anton+msyhbd" />
+  </ItemGroup>
   <ItemGroup>
 	<PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
 	<PackageReference Include="BepInEx.Core" Version="5.*" />
