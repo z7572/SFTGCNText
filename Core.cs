@@ -165,39 +165,46 @@ namespace CNText
                 return codes;
             }
 
-            // Patch <OnSavedClicked>c__AnonStorey1.<>m__1
             [HarmonyPatch]
-            public static class OnSavedClickedDelegatePatch
+            public static class AutoLocalizedDelegatesPatch
             {
+                private static readonly Dictionary<string, string> TranslationDict = new()
+                {
+                { "Save Sucessful!", "保存成功！" },
+                { "Loading This Map Will Overwrite Any Unsaved Progress, Continue?", "加载此地图将覆盖任何未保存的进度，继续吗？" },
+                { "Do You Want To Delete Map: ", "你确定要删除地图: " },
+                { "Do You Want To Unsubscribe From Map: ", "你确定要取消订阅地图: " },
+                { " ?", " 吗？" }
+            };
+
                 static IEnumerable<MethodBase> TargetMethods()
                 {
-                    var result = new List<MethodBase>();
+                    var targets = new List<MethodBase>();
+
                     try
                     {
                         var nestedTypes = typeof(EditorLoadSaveUI).GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public);
 
                         foreach (var type in nestedTypes)
                         {
-                            if (!type.Name.Contains("OnSavedClicked")) continue;
-
                             foreach (var method in type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
                             {
                                 if (method.IsConstructor || method.IsAbstract || method.ContainsGenericParameters) continue;
+
                                 if (!method.Name.Contains("<") && !method.Name.Contains("$") && !method.Name.Contains("m__") && !method.Name.Contains("b__")) continue;
 
-                                if (HasStringInstruction(method, "Save Sucessful!"))
+                                if (ContainsAnyTargetString(method))
                                 {
-                                    result.Add(method);
-                                    break;
+                                    targets.Add(method);
                                 }
                             }
                         }
                     }
                     catch (Exception) { }
-                    return result;
+                    return targets;
                 }
 
-                private static bool HasStringInstruction(MethodBase method, string searchString)
+                private static bool ContainsAnyTargetString(MethodBase method)
                 {
                     try
                     {
@@ -206,16 +213,13 @@ namespace CNText
 
                         foreach (var inst in instructions)
                         {
-                            if (inst.opcode == OpCodes.Ldstr && (string)inst.operand == searchString)
+                            if (inst.opcode == OpCodes.Ldstr && inst.operand is string str)
                             {
-                                return true;
+                                if (TranslationDict.ContainsKey(str)) return true;
                             }
                         }
                     }
-                    catch
-                    {
-                        return false;
-                    }
+                    catch { }
                     return false;
                 }
 
@@ -224,7 +228,13 @@ namespace CNText
                     var codes = new List<CodeInstruction>(instructions);
                     for (int i = 0; i < codes.Count; i++)
                     {
-                        ReplaceLdstr(codes[i], "Save Sucessful!", "保存成功！");
+                        if (codes[i].opcode == OpCodes.Ldstr && codes[i].operand is string original)
+                        {
+                            if (TranslationDict.TryGetValue(original, out string translated))
+                            {
+                                codes[i].operand = translated;
+                            }
+                        }
                     }
                     return codes;
                 }
