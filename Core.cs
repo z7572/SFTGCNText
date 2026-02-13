@@ -13,7 +13,7 @@ using UnityEngine.UI;
 
 namespace CNText
 {
-    [BepInPlugin("z7572.cntext", "CNText", "1.1")]
+    [BepInPlugin("z7572.cntext", "CNText", "1.2")]
     public class MapEditorCNText : BaseUnityPlugin
     {
         public static Font ttf;
@@ -163,6 +163,71 @@ namespace CNText
                     ReplaceLdstr(codes[i], "Save Error: ", "保存错误: ");
                 }
                 return codes;
+            }
+
+            // Patch <OnSavedClicked>c__AnonStorey1.<>m__1
+            [HarmonyPatch]
+            public static class OnSavedClickedDelegatePatch
+            {
+                static IEnumerable<MethodBase> TargetMethods()
+                {
+                    var result = new List<MethodBase>();
+                    try
+                    {
+                        var nestedTypes = typeof(EditorLoadSaveUI).GetNestedTypes(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public);
+
+                        foreach (var type in nestedTypes)
+                        {
+                            if (!type.Name.Contains("OnSavedClicked")) continue;
+
+                            foreach (var method in type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public))
+                            {
+                                if (method.IsConstructor || method.IsAbstract || method.ContainsGenericParameters) continue;
+                                if (!method.Name.Contains("<") && !method.Name.Contains("$") && !method.Name.Contains("m__") && !method.Name.Contains("b__")) continue;
+
+                                if (HasStringInstruction(method, "Save Sucessful!"))
+                                {
+                                    result.Add(method);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception) { }
+                    return result;
+                }
+
+                private static bool HasStringInstruction(MethodBase method, string searchString)
+                {
+                    try
+                    {
+                        var instructions = PatchProcessor.GetOriginalInstructions(method);
+                        if (instructions == null) return false;
+
+                        foreach (var inst in instructions)
+                        {
+                            if (inst.opcode == OpCodes.Ldstr && (string)inst.operand == searchString)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                    return false;
+                }
+
+                static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+                {
+                    var codes = new List<CodeInstruction>(instructions);
+                    for (int i = 0; i < codes.Count; i++)
+                    {
+                        ReplaceLdstr(codes[i], "Save Sucessful!", "保存成功！");
+                    }
+                    return codes;
+                }
             }
 
             [HarmonyTranspiler]
