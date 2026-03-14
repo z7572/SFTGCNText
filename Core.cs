@@ -5,6 +5,7 @@ using LevelEditor;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using TMPro;
@@ -13,7 +14,7 @@ using UnityEngine.UI;
 
 namespace CNText
 {
-    [BepInPlugin("z7572.cntext", "CNText", "1.2")]
+    [BepInPlugin("z7572.cntext", "CNText", "1.3")]
     public class MapEditorCNText : BaseUnityPlugin
     {
         public static Font ttf;
@@ -66,6 +67,15 @@ namespace CNText
                 {
                     textMeshProUGUI.enabled = true;
                     var hasUnsupportedChars = textMeshProUGUI.GetParsedText().Contains("□") && !textMeshProUGUI.text.Contains("□");
+
+                    var rawText = textMeshProUGUI.text;
+                    var hasRichTextTags = textMeshProUGUI.GetParsedText() != rawText;
+                    var hasEmoji = rawText.Any(char.IsSurrogate);
+
+                    if (hasEmoji && !hasRichTextTags)
+                    {
+                        hasUnsupportedChars = false;
+                    }
 
                     if (hasUnsupportedChars)
                     {
@@ -170,12 +180,12 @@ namespace CNText
             {
                 private static readonly Dictionary<string, string> TranslationDict = new()
                 {
-                { "Save Sucessful!", "保存成功！" },
-                { "Loading This Map Will Overwrite Any Unsaved Progress, Continue?", "加载此地图将覆盖任何未保存的进度，继续吗？" },
-                { "Do You Want To Delete Map: ", "你确定要删除地图: " },
-                { "Do You Want To Unsubscribe From Map: ", "你确定要取消订阅地图: " },
-                { " ?", " 吗？" }
-            };
+                    { "Save Sucessful!", "保存成功！" },
+                    { "Loading This Map Will Overwrite Any Unsaved Progress, Continue?", "加载此地图将覆盖任何未保存的进度，继续吗？" },
+                    { "Do You Want To Delete Map: ", "你确定要删除地图: " },
+                    { "Do You Want To Unsubscribe From Map: ", "你确定要取消订阅地图: " },
+                    { " ?", " 吗？" }
+                };
 
                 static IEnumerable<MethodBase> TargetMethods()
                 {
@@ -413,7 +423,7 @@ namespace CNText
 
             if (transform2 == null)
             {
-                var textObject = new GameObject(nameOfText);
+                var textObject = new GameObject(nameOfText, typeof(RectTransform));
                 transform2 = textObject.transform;
                 transform2.SetParent(transform, false);
                 transform2.localPosition = Vector3.zero;
@@ -432,6 +442,19 @@ namespace CNText
                 text.alignment = TextAnchor.MiddleCenter;
                 text.alignByGeometry = true;
             }
+
+            var rectTransform = transform2.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                rectTransform.anchorMin = Vector2.zero;
+                rectTransform.anchorMax = Vector2.one;
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.offsetMax = Vector2.zero;
+                rectTransform.pivot = textMeshProUGUI.rectTransform.pivot;
+            }
+
+            text.horizontalOverflow = textMeshProUGUI.enableWordWrapping ? HorizontalWrapMode.Wrap : HorizontalWrapMode.Overflow;
+            text.fontSize = (int)textMeshProUGUI.fontSize;
 
             text.color = new Color(textMeshProUGUI.color.r, textMeshProUGUI.color.g, textMeshProUGUI.color.b, 1f);
             text.text = TMPToFontTextConverter.Convert(textMeshProUGUI.text, removeUnsupportedTags.Value, closeUnclosedTags.Value);
