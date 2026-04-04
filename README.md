@@ -61,34 +61,37 @@ StickFightTheGame\
       - 如果有Emoji且没有富文本标签，取消回退到 `Text` 组件，还是用TMP显示Emoji/方框
 
 ## 文件说明(v1.3 及之前)：
+<details>
+  <summary>点击展开</summary>
 
-### globalgamemanagers
-- 为新增字体建立依赖和容器（包含 `fonts` 及 `materials/xxx sdf`）
-- 可通过富文本标签 `<font=xxx sdf>` 调用字体
+  ### globalgamemanagers
+  - 为新增字体建立依赖和容器（包含 `fonts` 及 `materials/xxx sdf`）
+  - 可通过富文本标签 `<font=xxx sdf>` 调用字体
 
-### sharedassets0.assets
-- 字体替换（名称保持不变）：
-  - `Anton` -> `Anton+SSZhengYaTi`
-  - `Roboto-Bold SDF` -> `Roboto+MiSans Part I`
-- 新增字体：
-  - `Roboto+MiSans Part II`（需 Mod 前置）
-  - `Anton+MiSans`
+  ### sharedassets0.assets
+  - 字体替换（名称保持不变）：
+    - `Anton` -> `Anton+SSZhengYaTi`
+    - `Roboto-Bold SDF` -> `Roboto+MiSans Part I`
+  - 新增字体：
+    - `Roboto+MiSans Part II`（需 Mod 前置）
+    - `Anton+MiSans`
 
-### level0
-- 包含汉化文本
-- 玩家名称字体改为 `Anton+MiSans`（需依赖 `sharedassets0.assets`，否则会崩溃）
+  ### level0
+  - 包含汉化文本
+  - 玩家名称字体改为 `Anton+MiSans`（需依赖 `sharedassets0.assets`，否则会崩溃）
 
-### CNText.dll
-- 一个 [BepInEx](https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.4/BepInEx_x86_5.4.23.4.zip) Mod
-- 对 `Roboto+MiSans Part II` 字体进行绑定，通过赋值 `fallbackfont` 实现多字体合并（因贴图大小限制8192x）
-- 功能支持：
-  - 地图编辑器汉化
-  - 聊天支持输入中文字符
-    - 注意：对方需有字体才能正常显示（双方都装了汉化包），否则还是会显示为方框 □
-    - ~~如果你能够通过[其他途径](https://blog.monblog.top/openlist/stick.plugins.chatrecorder)获取到聊天文本也可以看到中文~~
-  - 玩家名支持显示几乎所有字符
-    - 4500字库外的文字改用Text和ttf字体（一旦有这些文字，富文本格式将只支持`<i>`, `<color=#...>`, `<#...>`）
-      - 不支持的字符会直接不显示，无方框
+  ### CNText.dll
+  - 一个 [BepInEx](https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.4/BepInEx_x86_5.4.23.4.zip) Mod
+  - 对 `Roboto+MiSans Part II` 字体进行绑定，通过赋值 `fallbackfont` 实现多字体合并（因贴图大小限制8192x）
+  - 功能支持：
+    - 地图编辑器汉化
+    - 聊天支持输入中文字符
+      - 注意：对方需有字体才能正常显示（双方都装了汉化包），否则还是会显示为方框 □
+      - ~~如果你能够通过[其他途径](https://blog.monblog.top/openlist/stick.plugins.chatrecorder)获取到聊天文本也可以看到中文~~
+    - 玩家名支持显示几乎所有字符
+      - 4500字库外的文字改用Text和ttf字体（一旦有这些文字，富文本格式将只支持`<i>`, `<color=#...>`, `<#...>`）
+        - 不支持的字符会直接不显示，无方框
+</details>
 
 ## 附
 - 支持 ~~3953~~ 7046 个中文字符
