@@ -26,16 +26,16 @@ public class CNText : BaseUnityPlugin
         {
             var ab_impact = Helper.GetAssetBundle(Assembly.GetExecutingAssembly(), "impact+misans");
             Impact_MiSans = ab_impact?.LoadAsset<TMP_FontAsset>("Impact+MiSans SDF");
-            MaterialReferenceManager.AddFontAsset(Impact_MiSans);
+            Helper.RegisterCustomFont(Impact_MiSans);
             Impact_MiSans_ttf = ab_impact?.LoadAsset<Font>("Impact+MiSans");
 
             var ab_anton = Helper.GetAssetBundle(Assembly.GetExecutingAssembly(), "anton+sszy");
             Anton_SSZY = ab_anton?.LoadAsset<TMP_FontAsset>("Anton+SSZhengYaTi SDF");
-            MaterialReferenceManager.AddFontAsset(Anton_SSZY);
+            Helper.RegisterCustomFont(Anton_SSZY);
 
             var ab_roboto = Helper.GetAssetBundle(Assembly.GetExecutingAssembly(), "roboto+misans");
             Roboto_MiSans = ab_roboto?.LoadAsset<TMP_FontAsset>("Roboto+MiSans SDF");
-            MaterialReferenceManager.AddFontAsset(Roboto_MiSans);
+            Helper.RegisterCustomFont(Roboto_MiSans);
         }
         catch (Exception e)
         {
@@ -46,14 +46,19 @@ public class CNText : BaseUnityPlugin
 
         var sdf = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf");
         var sdf2 = Resources.Load<TMP_FontAsset>("fonts & materials/roboto-bold sdf ii");
-        if (sdf2 == null)
+        if (sdf2 != null)
         {
-            Logger.LogWarning("未安装旧版汉化包");
+            if (sdf.fallbackFontAssets[0] == null || sdf.fallbackFontAssets[0] != sdf2)
+            {
+                sdf.fallbackFontAssets[0] = sdf2;
+            }
+            Logger.LogInfo("安装了旧版汉化包，已补全fallback字体");
         }
-        if (sdf.fallbackFontAssets[0] == null || sdf.fallbackFontAssets[0] != sdf2)
+        else
         {
-            sdf.fallbackFontAssets[0] = sdf2;
+            Logger.LogInfo("未安装旧版汉化包");
         }
+
         try
         {
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());

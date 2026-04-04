@@ -2,11 +2,15 @@
 using TMPro;
 using UnityEngine;
 using System;
+using Object = UnityEngine.Object;
 
 namespace CNText;
 
+/// <summary>
+/// 
+/// </summary>
 [HarmonyPatch]
-public static class TargetedFontReplacePatch
+public static class GlobalFontReplacePatch
 {
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TextMeshPro), "Awake")]
@@ -14,16 +18,24 @@ public static class TargetedFontReplacePatch
     {
         if (__instance.font == null) return;
 
-        string fontName = __instance.font.name;
+        var fontName = __instance.font.name;
 
-        if (fontName.Equals("Anton SDF", StringComparison.OrdinalIgnoreCase))
+        if (fontName.Equals("MiSans SDF", StringComparison.OrdinalIgnoreCase))
+        {
+            if (CNText.Impact_MiSans != null)
+            {
+                __instance.font = CNText.Impact_MiSans;
+            }
+        }
+        else if (fontName.Equals("Anton SDF", StringComparison.OrdinalIgnoreCase))
         {
             if (CNText.Anton_SSZY != null)
             {
                 __instance.font = CNText.Anton_SSZY;
             }
         }
-        else if (fontName.Equals("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase))
+        else if (fontName.Equals("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase) ||
+                 fontName.Equals("roboto-bold sdf ii", StringComparison.OrdinalIgnoreCase))
         {
             if (CNText.Roboto_MiSans != null)
             {
@@ -38,17 +50,26 @@ public static class TargetedFontReplacePatch
     {
         if (__instance.font == null) return;
 
-        string fontName = __instance.font.name;
+        var fontName = __instance.font.name;
 
-        if (fontName.Equals("Anton SDF", StringComparison.OrdinalIgnoreCase) ||
-            fontName.Equals("MiSans SDF", StringComparison.OrdinalIgnoreCase))
+        if (fontName.Equals("MiSans SDF", StringComparison.OrdinalIgnoreCase))
+        {
+            if (CNText.Impact_MiSans != null)
+            {
+                __instance.font = CNText.Impact_MiSans;
+            }
+        }
+        else if (fontName.Equals("Anton SDF", StringComparison.OrdinalIgnoreCase))
         {
             if (__instance.transform.parent != null &&
-                __instance.transform.parent.GetComponent<OnlinePlayerUI>() != null)
+                __instance.transform.parent.GetComponent<OnlinePlayerUI>() != null &&
+                ConfigHandler.needReplaceTextComp.Value)
             {
                 if (CNText.Impact_MiSans != null)
                 {
                     __instance.font = CNText.Impact_MiSans;
+                    __instance.fontSize = ConfigHandler.customTextFontSize.Value;
+                    __instance.fontStyle = FontStyles.Normal;
                 }
             }
             else
@@ -59,7 +80,8 @@ public static class TargetedFontReplacePatch
                 }
             }
         }
-        else if (fontName.Equals("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase))
+        else if (fontName.Equals("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase) ||
+                 fontName.Equals("Roboto-Bold SDF II", StringComparison.OrdinalIgnoreCase))
         {
             if (CNText.Roboto_MiSans != null)
             {
@@ -68,32 +90,38 @@ public static class TargetedFontReplacePatch
         }
     }
 
-    //[HarmonyPrefix]
-    //[HarmonyPatch(typeof(Resources), "Load", new Type[] { typeof(string), typeof(Type) })]
-    //public static bool ResourcesLoadPrefix(string path, Type systemTypeInstance, ref UnityEngine.Object __result)
-    //{
-    //    // 如果请求加载的是 TMP 字体
-    //    if (systemTypeInstance == typeof(TMP_FontAsset))
-    //    {
-    //        if (path.IndexOf("Anton SDF", StringComparison.OrdinalIgnoreCase) >= 0)
-    //        {
-    //            // 动态加载时没有 GameObject 父级上下文，所以返回通用的 Anton 替换
-    //            if (CNText.Anton_SSZY != null)
-    //            {
-    //                __result = CNText.Anton_SSZY;
-    //                return false;
-    //            }
-    //        }
-    //        else if (path.IndexOf("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase) >= 0 ||
-    //                 path.IndexOf("roboto-bold sdf ii", StringComparison.OrdinalIgnoreCase) >= 0)
-    //        {
-    //            if (CNText.Roboto_MiSans != null)
-    //            {
-    //                __result = CNText.Roboto_MiSans;
-    //                return false;
-    //            }
-    //        }
-    //    }
-    //    return true;
-    //}
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Resources), "Load", typeof(string), typeof(Type))]
+    public static bool ResourcesLoadPrefix(string path, Type systemTypeInstance, ref Object __result)
+    {
+        if (systemTypeInstance == typeof(TMP_FontAsset))
+        {
+            if (path.IndexOf("MiSans SDF", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                if (CNText.Impact_MiSans != null)
+                {
+                    __result = CNText.Impact_MiSans;
+                    return false;
+                }
+            }
+            else if (path.IndexOf("Anton SDF", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                if (CNText.Anton_SSZY != null)
+                {
+                    __result = CNText.Anton_SSZY;
+                    return false;
+                }
+            }
+            else if (path.IndexOf("Roboto-Bold SDF", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     path.IndexOf("Roboto-Bold SDF II", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                if (CNText.Roboto_MiSans != null)
+                {
+                    __result = CNText.Roboto_MiSans;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

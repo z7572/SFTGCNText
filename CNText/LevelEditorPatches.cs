@@ -125,7 +125,7 @@ public static class LevelEditorPatches
                     }
                 }
             }
-            catch (Exception) { }
+            catch { }
             return targets;
         }
 
@@ -282,19 +282,6 @@ public static class LevelEditorPatches
         for (int i = 0; i < codes.Count; i++)
         {
             ReplaceLdstr(codes[i], "Upload Error: ", "上传错误: ");
-        }
-        return codes;
-    }
-
-    [HarmonyTranspiler]
-    [HarmonyPatch(typeof(ServerLobbyTextUI), "OnEnable")]
-    private static IEnumerable<CodeInstruction> OnEnableTranspiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var codes = new List<CodeInstruction>(instructions);
-        for (int i = 0; i < codes.Count; i++)
-        {
-            ReplaceLdstr(codes[i], "WAITING FOR PLAYERS", "等待玩家加入");
-            ReplaceLdstr(codes[i], "INVITE YOUR FRIENDS THROUGH STEAM", "通过 STEAM 邀请你的好友");
         }
         return codes;
     }

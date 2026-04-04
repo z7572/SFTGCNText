@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -11,6 +12,24 @@ namespace CNText;
 
 public static class Helper
 {
+    public static void RegisterCustomFont(TMP_FontAsset font)
+    {
+        if (font == null) throw new ArgumentNullException(nameof(font));
+
+        MaterialReferenceManager.AddFontAsset(font);
+
+        // Support all lowercase and all uppercase names
+        var lowerHash = TMP_TextUtilities.GetSimpleHashCode(font.name.ToLower());
+        var upperHash = TMP_TextUtilities.GetSimpleHashCode(font.name.ToUpper());
+
+        if (AccessTools.Field(typeof(MaterialReferenceManager), "m_FontAssetReferenceLookup")
+                ?.GetValue(MaterialReferenceManager.instance) is Dictionary<int, TMP_FontAsset> lookupDict)
+        {
+            if (!lookupDict.ContainsKey(lowerHash)) lookupDict.Add(lowerHash, font);
+            if (!lookupDict.ContainsKey(upperHash)) lookupDict.Add(upperHash, font);
+        }
+    }
+
     public static void ReplaceLdstr(CodeInstruction code, string target, string replaceWith)
     {
         if (code.opcode == OpCodes.Ldstr && code.operand.ToString() == target)

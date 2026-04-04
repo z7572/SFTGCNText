@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 // Adapted from Moncak's stick.plugins.cntext
 // Add removal of sup, sub, sprite, size, material, quad and space tags
 // Add support of br tags
-public class TMPToFontTextConverter
+public static class TMPToFontTextConverter
 {
     public static string Convert(string input, bool removeUnsupportedTags = true, bool closeUnclosedTags = true)
     {
