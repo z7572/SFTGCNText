@@ -5,11 +5,9 @@
     <AssemblyName>CNText</AssemblyName>
     <RootNamespace>CNText</RootNamespace>
     <Authors>z7572</Authors>
-    <Version>2.0</Version>
+    <Version>2.1</Version>
     <Product>CNText</Product>
     <Description>A BepInEx mod for Stick Fight: The Game</Description>
-    <FileVersion>2.0</FileVersion>
-    <AssemblyVersion>2.0</AssemblyVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="anton+sszy" />
