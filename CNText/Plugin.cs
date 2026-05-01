@@ -72,5 +72,5 @@ public class CNText : BaseUnityPlugin
 
     public const string PLUGIN_GUID = "z7572.CNText";
     public const string PLUGIN_NAME = "CNText";
-    public const string PLUGIN_VERSION = "2.0";
+    public const string PLUGIN_VERSION = "2.1";
 }

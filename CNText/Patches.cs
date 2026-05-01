@@ -19,7 +19,8 @@ public class Patches
         var texts = Traverse.Create(__instance).Field("mPlayerTexts").GetValue<TextMeshProUGUI[]>();
         foreach (var textMeshProUGUI in texts)
         {
-            textMeshProUGUI.enabled = true;
+            if (textMeshProUGUI == null) continue;
+
             var hasUnsupportedChars = textMeshProUGUI.GetParsedText().Contains("□") && !textMeshProUGUI.text.Contains("□");
 
             var rawText = textMeshProUGUI.text;
@@ -35,6 +36,8 @@ public class Patches
             {
                 var text = TMP2FontText(textMeshProUGUI, CNText.Impact_MiSans_ttf, "CustomText");
                 text.fontSize = ConfigHandler.customTextFontSize.Value;
+
+                textMeshProUGUI.canvasRenderer.SetAlpha(0f);
             }
             else
             {
@@ -47,7 +50,7 @@ public class Patches
                         text.enabled = false;
                     }
                 }
-                textMeshProUGUI.color = new Color(textMeshProUGUI.color.r, textMeshProUGUI.color.g, textMeshProUGUI.color.b, 1f);
+                textMeshProUGUI.canvasRenderer.SetAlpha(1f);
             }
         }
     }
